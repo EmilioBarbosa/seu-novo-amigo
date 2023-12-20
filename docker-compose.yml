@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+    app:
+        working_dir: /var/www
+        build:
+            context: './docker/local/app'
+            dockerfile: Dockerfile
+        volumes:
+            - $PWD/:/var/www
+            - $PWD/docker/local/app/php:/usr/local/etc/php
+        networks:
+            - defaultNetwork
+    webserver:
+        image: nginx:alpine
+        ports:
+            - '${APP_PORT:-8000}:80'
+        volumes:
+            - $PWD/:/var/www
+            - $PWD/docker/local/nginx:/etc/nginx/conf.d
+            - $PWD/docker/local/app/php:/usr/local/etc/php
+        networks:
+            - defaultNetwork
+    db:
+        image: postgres:latest
+        ports:
+            - '${DB_PORT:-5432}:${DB_PORT:-5432}'
+        environment:
+            PGPASSWORD: '${DB_PASSWORD:-secret}'
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+        volumes:
+            - 'seunovoamigo:/var/lib/postgresql/data'
+        networks:
+            - defaultNetwork
+
+networks:
+    defaultNetwork:
+volumes:
+    seunovoamigo:

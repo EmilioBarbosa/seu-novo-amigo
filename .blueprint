@@ -1,0 +1,35 @@
+created:
+    - app/Http/Controllers/Api/AnimalController.php
+    - database/factories/StateFactory.php
+    - database/factories/CityFactory.php
+    - database/factories/AddressFactory.php
+    - database/factories/SpecieFactory.php
+    - database/factories/AnimalFactory.php
+    - database/migrations/2023_12_20_105419_create_states_table.php
+    - database/migrations/2023_12_20_105420_create_cities_table.php
+    - database/migrations/2023_12_20_105421_create_addresses_table.php
+    - database/migrations/2023_12_20_105422_create_species_table.php
+    - database/migrations/2023_12_20_105423_create_animals_table.php
+    - app/Models/State.php
+    - app/Models/City.php
+    - app/Models/Address.php
+    - app/Models/Specie.php
+    - app/Models/Animal.php
+    - database/seeders/UserSeeder.php
+    - database/seeders/AddressSeeder.php
+    - database/seeders/SpecieSeeder.php
+    - database/seeders/AnimalSeeder.php
+    - tests/Feature/Http/Controllers/Api/AnimalControllerTest.php
+    - app/Http/Requests/Api/AnimalStoreRequest.php
+    - app/Http/Requests/Api/AnimalUpdateRequest.php
+    - app/Http/Resources/Api/AnimalCollection.php
+    - app/Http/Resources/Api/AnimalResource.php
+updated:
+    - routes/api.php
+models:
+    State: { name: varchar, timestamps: false }
+    City: { name: varchar, state_id: 'id foreign', timestamps: false }
+    Adress: { user_id: 'id foreign', street: string, number: 'number nullable', neighbourhood: string, cep: string, city_id: 'id foreign' }
+    Specie: { name: string, timestamps: false }
+    Animal: { name: string, size: 'enum:Mini,Pequeno,Médio,Grande', specie_id: 'id foreign', created_by: 'id foreign:users.id' }
+    Address: { user_id: 'id foreign', street: string, number: 'integer nullable', neighbourhood: string, cep: string, city_id: 'id foreign' }

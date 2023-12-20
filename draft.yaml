@@ -1,0 +1,29 @@
+models:
+  State:
+    name: varchar
+    timestamps: false
+  City:
+    name: varchar
+    state_id: id foreign
+    timestamps: false
+  Address:
+    user_id: id foreign
+    street: string
+    number: integer nullable
+    neighbourhood: string
+    cep: string
+    city_id: id foreign
+  Specie:
+    name: string
+    timestamps: false
+  Animal:
+    name: string
+    size: enum:Mini,Pequeno,Médio,Grande
+    specie_id: id foreign
+    created_by: id foreign:users.id
+
+seeders: User, Address, Specie, Animal
+
+controllers:
+  Api\Animal:
+    resource: api
