@@ -11,7 +11,7 @@ class AnimalUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->id() === $this->animal->created_by;
     }
 
     /**

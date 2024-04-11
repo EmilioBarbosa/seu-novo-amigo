@@ -8,6 +8,8 @@ use App\Models\Specie;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\Fluent\AssertableJson;
 use JMac\Testing\Traits\AdditionalAssertions;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,7 +27,7 @@ final class AnimalControllerTest extends TestCase
     {
         Animal::factory()->count(3)->create();
 
-        $response = $this->getJson(route('animal.index'));
+        $response = $this->getJson(route('animals.index'));
 
         $response->assertOk();
 
@@ -48,6 +50,8 @@ final class AnimalControllerTest extends TestCase
     #[Test]
     public function store_saves(): void
     {
+        Storage::fake(config('app.filesystem_disk'));
+
         $name = $this->faker->name();
 
         $size = $this->faker->randomElement(AnimalSize::cases())->value;
@@ -56,13 +60,13 @@ final class AnimalControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->actingAs($user);
-
-        $response = $this->postJson(route('animal.store'), [
+        $response =$this->actingAs($user)->postJson(route('animals.store'), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,
-            'created_by' => $user->id,
+            'images' => [
+                UploadedFile::fake()->image('photo.jpg')
+            ]
         ]);
 
         $animals = Animal::query()
@@ -85,7 +89,7 @@ final class AnimalControllerTest extends TestCase
     {
         $animal = Animal::factory()->create();
 
-        $response = $this->getJson(route('animal.show', $animal->id));
+        $response = $this->getJson(route('animals.show', $animal->id));
 
         $response->assertOk();
 
@@ -118,7 +122,7 @@ final class AnimalControllerTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->putJson(route('animal.update', $animal), [
+        $response = $this->putJson(route('animals.update', $animal), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,
@@ -157,14 +161,14 @@ final class AnimalControllerTest extends TestCase
 
         $this->actingAs($wrong_user);
 
-        $response = $this->putJson(route('animal.update', $animal->id), [
+        $response = $this->putJson(route('animals.update', $animal->id), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,
             'created_by' => $user->id,
         ]);
 
-        $response->assertUnauthorized();
+        $response->assertForbidden();
     }
 
 
@@ -179,7 +183,7 @@ final class AnimalControllerTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->deleteJson(route('animal.destroy', $animal->id));
+        $response = $this->deleteJson(route('animals.destroy', $animal->id));
 
         $response->assertNoContent();
 
@@ -199,7 +203,7 @@ final class AnimalControllerTest extends TestCase
 
         $this->actingAs($wrong_user);
 
-        $response = $this->deleteJson(route('animal.destroy', $animal->id));
+        $response = $this->deleteJson(route('animals.destroy', $animal->id));
 
         $response->assertUnauthorized();
 

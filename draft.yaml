@@ -21,7 +21,10 @@ models:
     size: enum:Mini,Pequeno,Médio,Grande
     specie_id: id foreign
     created_by: id foreign:users.id
-
+  Image:
+    path: string
+    disk: string
+    imageable: morphs
 seeders: User, Address, Specie, Animal
 
 controllers:

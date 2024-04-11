@@ -10,6 +10,7 @@ use App\Http\Resources\Api\AnimalResource;
 use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class AnimalController extends Controller
 {
@@ -27,7 +28,16 @@ class AnimalController extends Controller
 
     public function store(AnimalStoreRequest $request): AnimalResource
     {
-        $animal = Animal::create($request->validated());
+        $animal = Animal::create($request->except('images'));
+
+        foreach ($request->images as $image) {
+            $path = $image->store("animals/$animal->id");
+
+            $animal->images()->create([
+                'path' => $path,
+                'disk' => config('app.filesystem_disk')
+            ]);
+        }
 
         return new AnimalResource($animal);
     }
@@ -39,11 +49,7 @@ class AnimalController extends Controller
 
     public function update(AnimalUpdateRequest $request, Animal $animal): AnimalResource|\Illuminate\Http\JsonResponse
     {
-        if(auth()->id() !== $animal->created_by) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $animal->update($request->validated());
+        $animal->update($request->all());
 
         return new AnimalResource($animal);
     }
