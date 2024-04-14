@@ -17,5 +17,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group(['middleware' => 'api'], function ($router) {
-    Route::apiResource('animal', AnimalController::class);
+    Route::apiResource('animals', AnimalController::class, ['except' => ['update']]);
+    Route::patch('animals/{animal}', [AnimalController::class, 'update'])->name('animals.update');
 });

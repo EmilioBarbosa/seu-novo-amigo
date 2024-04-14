@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class AnimalResource extends JsonResource
 {
@@ -18,6 +19,9 @@ class AnimalResource extends JsonResource
             'size' => $this->size,
             'specie_id' => $this->specie_id,
             'created_by' => $this->created_by,
+            'images' => $this->images->map(function ($image) {
+                return Storage::disk($image->disk)->url($image->path);
+            })
         ];
     }
 }

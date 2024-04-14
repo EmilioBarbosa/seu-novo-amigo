@@ -8,8 +8,10 @@ use App\Http\Requests\Api\AnimalUpdateRequest;
 use App\Http\Resources\Api\AnimalCollection;
 use App\Http\Resources\Api\AnimalResource;
 use App\Models\Animal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class AnimalController extends Controller
 {
@@ -25,11 +27,29 @@ class AnimalController extends Controller
         return new AnimalCollection($animals);
     }
 
-    public function store(AnimalStoreRequest $request): AnimalResource
+    public function store(AnimalStoreRequest $request): AnimalResource | JsonResponse
     {
-        $animal = Animal::create($request->validated());
+        try {
+            $validated = $request->validated();
 
-        return new AnimalResource($animal);
+            $validated['created_by'] = auth()->id();
+
+            $animal = Animal::create($validated);
+
+            foreach ($request->images as $image) {
+                $path = $image->store("animals/$animal->id");
+
+                $animal->images()->create([
+                    'path' => $path,
+                    'disk' => config('app.filesystem_disk')
+                ]);
+            }
+
+            return new AnimalResource($animal);
+
+        } catch (\Exception $exception) {
+            return response()->json(['message' => $exception->getMessage()], 500);
+        }
     }
 
     public function show(Request $request, Animal $animal): AnimalResource
@@ -37,18 +57,36 @@ class AnimalController extends Controller
         return new AnimalResource($animal);
     }
 
-    public function update(AnimalUpdateRequest $request, Animal $animal): AnimalResource|\Illuminate\Http\JsonResponse
+    public function update(AnimalUpdateRequest $request, Animal $animal): AnimalResource|JsonResponse
     {
-        if(auth()->id() !== $animal->created_by) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            $animal->update($request->validated());
+
+            if ($request->has('images')) {
+                $paths_to_delete = $animal->images->pluck('path');
+
+                Storage::delete($paths_to_delete->toArray());
+
+                $animal->images()->delete();
+
+                foreach ($request->images as $image) {
+                    $path = $image->store("animals/$animal->id");
+
+                    $animal->images()->create([
+                        'path' => $path,
+                        'disk' => config('app.filesystem_disk')
+                    ]);
+                }
+            }
+
+            return new AnimalResource($animal);
+        } catch (\Exception $exception) {
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
 
-        $animal->update($request->validated());
-
-        return new AnimalResource($animal);
     }
 
-    public function destroy(Request $request, Animal $animal): Response|\Illuminate\Http\JsonResponse
+    public function destroy(Request $request, Animal $animal): Response|JsonResponse
     {
         if(auth()->id() !== $animal->created_by) {
             return response()->json(['message' => 'Unauthorized'], 401);
