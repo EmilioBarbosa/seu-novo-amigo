@@ -4,6 +4,7 @@ namespace Tests\Feature\Http\Controllers\Api;
 
 use App\Enums\AnimalSize;
 use App\Models\Animal;
+use App\Models\Image;
 use App\Models\Specie;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,7 +61,7 @@ final class AnimalControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $response =$this->actingAs($user)->postJson(route('animals.store'), [
+        $response = $this->actingAs($user)->postJson(route('animals.store'), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,
@@ -110,6 +111,8 @@ final class AnimalControllerTest extends TestCase
     #[Test]
     public function update_behaves_as_expected(): void
     {
+        Storage::fake(config('app.filesystem_disk'));
+
         $animal = Animal::factory()->create();
 
         $name = $this->faker->name();
@@ -120,13 +123,10 @@ final class AnimalControllerTest extends TestCase
 
         $user = $animal->user;
 
-        $this->actingAs($user);
-
-        $response = $this->putJson(route('animals.update', $animal), [
+        $response = $this->actingAs($user)->patchJson(route('animals.update', $animal), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,
-            'created_by' => $user->id,
         ]);
 
         $animal->refresh();
@@ -142,6 +142,36 @@ final class AnimalControllerTest extends TestCase
         $this->assertEquals($specie->id, $animal->specie_id);
 
         $this->assertEquals($user->id, $animal->created_by);
+    }
+
+    #[Test]
+    public function update_images_works_as_expected(): void
+    {
+        Storage::fake(config('app.filesystem_disk'));
+
+        $animal = Animal::factory()->has(Image::factory(), 'images')->create();
+
+        $old_image = $animal->images->first();
+
+        $user = $animal->user;
+
+        $response = $this->actingAs($user)->patchJson(route('animals.update', $animal), [
+            'images' => [
+                UploadedFile::fake()->image('photo.jpg')
+            ]
+        ]);
+
+        $animal->refresh();
+
+        $new_image = $animal->images->first();
+
+        Storage::disk(config('app.filesystem_disk'))->assertExists($new_image->path);
+
+        Storage::disk(config('app.filesystem_disk'))->assertMissing($old_image->path);
+
+        $response->assertOk();
+
+        $this->assertNotEquals($new_image->id,$old_image->id);
     }
 
     #[Test]
@@ -161,7 +191,7 @@ final class AnimalControllerTest extends TestCase
 
         $this->actingAs($wrong_user);
 
-        $response = $this->putJson(route('animals.update', $animal->id), [
+        $response = $this->patchJson(route('animals.update', $animal->id), [
             'name' => $name,
             'size' => $size,
             'specie_id' => $specie->id,

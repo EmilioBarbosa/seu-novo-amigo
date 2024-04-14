@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Enums\AnimalSize;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AnimalStoreRequest extends FormRequest
 {
@@ -21,10 +23,10 @@ class AnimalStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string'],
-            'size' => ['required', 'in:Mini,Pequeno,Médio,Grande'],
+            'size' => ['required', Rule::enum(AnimalSize::class)],
             'specie_id' => ['required', 'integer', 'exists:species,id'],
-            'images' => ['required', 'array', 'min:1', 'max:5'],
-            'images.*' => ['required', 'image', 'file'],
+            'images' => ['required', 'array', 'max:5'],
+            'images.*' => ['required', 'image', 'file']
         ];
     }
 
@@ -38,17 +40,9 @@ class AnimalStoreRequest extends FormRequest
             'specie_id.exists' => 'A espécie selecionada não é válida.',
             'images.required' => 'É necessário enviar pelo menos uma imagem.',
             'images.array' => 'As imagens devem ser fornecidas em um formato de array.',
-            'images.min' => 'É necessário enviar pelo menos uma imagem.',
+            'images.max' => 'Só é permitido enviar 5 imagens.',
             'images.*.required' => 'Cada imagem deve ser um arquivo de imagem válido.',
             'images.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
         ];
     }
-
-    public function prepareForValidation()
-    {
-        return $this->merge([
-           'created_by' => auth()->id(),
-        ]);
-    }
-
 }

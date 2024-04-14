@@ -26,8 +26,8 @@ class ImageFactory extends Factory
         $imageable = $this->imageable();
 
         return [
-            'path' => $this->faker->word(),
-            'disk' => 'testing',
+            'path' => $this->faker->word() . "/" . $this->faker->word() . ".jpg",
+            'disk' => config('app.filesystem_disk'),
             'imageable_id' => $imageable::factory(),
             'imageable_type' => $imageable,
         ];
