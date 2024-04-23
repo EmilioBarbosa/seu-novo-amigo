@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Specie;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SpecieSeeder extends Seeder
 {
@@ -12,6 +13,14 @@ class SpecieSeeder extends Seeder
      */
     public function run(): void
     {
-        Specie::factory()->count(5)->create();
+        DB::table("species")->insert([
+            [
+                "name" => "Cachorro"
+            ],
+            [
+                "name" => "Gato"
+            ]
+        ]);
+
     }
 }
